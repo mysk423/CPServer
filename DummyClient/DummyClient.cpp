@@ -6,6 +6,12 @@
 #include <WS2tcpip.h>
 #pragma comment(lib, "ws2_32.lib")
 
+void HandleError(const char* cause)
+{
+	int32 errCode = ::WSAGetLastError();
+	cout << cause << "ErrorCode : " << errCode << endl;
+}
+
 int main()
 {
 	// 윈속 초기화 (ws2_32 라이브러리 초기화)
@@ -16,38 +22,71 @@ int main()
 
 	SOCKET clientSocket = ::socket(AF_INET, SOCK_STREAM, 0);
 	if (clientSocket == INVALID_SOCKET)
-	{
-		int32 errCode = ::WSAGetLastError();
-		cout << "Socket ErrorCode : " << errCode << endl;
-
 		return 0;
-	}
+
+	u_long on = 1;
+	if (::ioctlsocket(clientSocket, FIONBIO, &on) == INVALID_SOCKET)
+		return 0;
 
 	SOCKADDR_IN serverAddr;
 	::memset(&serverAddr, 0, sizeof(serverAddr));
 	serverAddr.sin_family = AF_INET;
-	//serverAddr.sin_addr.s_addr = ::inet_addr("127.0.0.1");
 	::inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
 	serverAddr.sin_port = ::htons(7777);
 
-	if (::connect(clientSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
+	while (true)
 	{
-		int32 errCode = ::WSAGetLastError();
-		cout << "Socket ErrorCode : " << errCode << endl;
+		if (::connect(clientSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
+		{
+			if (::WSAGetLastError() == WSAEWOULDBLOCK)
+				continue;
 
-		return 0;
+			if (::WSAGetLastError() == WSAEISCONN)
+				break;
+
+			break;
+		}
 	}
 
-	// ------------------------------------------------ 연결 성공
-	cout << "Connected To Server!" << endl;
+	cout << "Connected to Server! " << endl;
+
+	char sendBuffer[100] = "Hello World! ";
 
 	while (true)
 	{
-		// TODO
+		if (::send(clientSocket, sendBuffer, sizeof(sendBuffer), 0) == SOCKET_ERROR)
+		{
+			if (::WSAGetLastError() == WSAEWOULDBLOCK)
+				continue;
 
-		this_thread::sleep_for(1ms);
+			break;
+		}
+
+		cout << "Send Data ! Len = " << sizeof(sendBuffer) << endl;
+
+		while (true)
+		{
+			char recvBuffer[1000];
+			int32 recvLen = ::recv(clientSocket, recvBuffer, sizeof(recvBuffer), 0);
+			if (recvLen == SOCKET_ERROR)
+			{
+				if (::WSAGetLastError() == WSAEWOULDBLOCK)
+					continue;
+
+				break;
+			}
+			else if (recvLen == 0)
+			{
+				break;
+			}
+
+			cout << "Recv Data Len " << recvLen << endl;
+			break;
+		}
+
+		this_thread::sleep_for(1s);
+
 	}
-
 
 	// 소켓 리소스 반환 및 윈속 종료
 	::closesocket(clientSocket);
