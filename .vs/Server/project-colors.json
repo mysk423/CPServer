@@ -5,7 +5,17 @@
       "ProjectGuid": "f03fe732-3473-4bbd-94b1-d4916c3b4a15",
       "DisplayName": "GameServer",
       "ColorIndex": 0
+    },
+    "bb44ae35-8484-4283-b63b-ceac19cb6242": {
+      "ProjectGuid": "bb44ae35-8484-4283-b63b-ceac19cb6242",
+      "DisplayName": "DummyClient",
+      "ColorIndex": 1
+    },
+    "cac2b122-7251-4759-8d77-04cd547b7348": {
+      "ProjectGuid": "cac2b122-7251-4759-8d77-04cd547b7348",
+      "DisplayName": "ServerCore",
+      "ColorIndex": 2
     }
   },
-  "NextColorIndex": 1
+  "NextColorIndex": 3
 }
